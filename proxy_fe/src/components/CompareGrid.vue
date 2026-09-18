@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { RunResult } from '../api/types';
-import { METRIC_ROWS, bestIndex, groupedRows, type MetricRow } from '../compare';
+import { bestIndex, groupedRows, type MetricRow } from '../compare';
 import { describeLeg, formatFactor } from '../format';
 import CpuTimeline from './CpuTimeline.vue';
 import InfoTip from './InfoTip.vue';
