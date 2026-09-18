@@ -39,9 +39,7 @@ class Settings(BaseSettings):
     token_secret: SecretStr
     user_key_secret: SecretStr
 
-    leg_timeout_seconds: int = Field(
-        default=300, ge=MIN_TIMEOUT_SECONDS, le=MAX_TIMEOUT_SECONDS
-    )
+    leg_timeout_seconds: int = Field(default=300, ge=MIN_TIMEOUT_SECONDS, le=MAX_TIMEOUT_SECONDS)
     rate_limit_window_seconds: int = Field(default=3600, ge=60)
     rate_limit_max_runs: int = Field(default=5, ge=1)
     run_token_ttl_seconds: int = Field(default=86_400, ge=300)
