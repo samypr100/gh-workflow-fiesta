@@ -3,13 +3,14 @@ name = "gh-workflow-fiesta"
 version = "0.1.0"
 description = "Python concurrency benchmark explorer"
 requires-python = ">=3.14"
-dependencies = ["bench-contract"]
+dependencies = ["bench-contract", "bench"]
 
 [tool.uv.workspace]
 members = ["contract", "bench", "proxy_be"]
 
 [tool.uv.sources]
 bench-contract = { workspace = true }
+bench = { workspace = true }
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,21 @@
+[project]
+name = "bench"
+version = "0.1.0"
+description = "CI harness and workloads for the concurrency benchmark explorer"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "bench-contract",
+    "psutil>=7.2.2",
+    "structlog>=24.4",
+]
+
+[project.scripts]
+bench-run = "bench.harness.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.15,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["types-psutil>=7.0"]
