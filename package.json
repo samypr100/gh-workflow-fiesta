@@ -1,0 +1,23 @@
+{
+  "name": "gh-workflow-fiesta-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker that fronts the FastAPI container and serves the Vue bundle",
+  "scripts": {
+    "build:fe": "cd proxy_fe && npm install && PUBLIC_BASE_PATH=/00000000-0000-0000-0000-000000000000 npm run build",
+    "typecheck": "tsc --noEmit -p tsconfig.worker.json",
+    "predeploy": "npm run build:fe",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "^0.3.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260910.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.131.0"
+  }
+}

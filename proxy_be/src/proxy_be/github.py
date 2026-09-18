@@ -1,5 +1,6 @@
 """Asynchronous client for the subset of the GitHub API this backend uses."""
 
+import asyncio
 import datetime
 import enum
 import http
@@ -24,6 +25,11 @@ API_VERSION = "2022-11-28"
 REQUEST_TIMEOUT_S = 30.0
 RUN_PAGE_SIZE = 50
 RUN_NAME_PATTERN = re.compile(r"^bench (?P<submission>\S+) \[(?P<user_key>[a-z0-9]+)\]$")
+
+# How long to keep looking for a just-dispatched run before concluding it is
+# genuinely absent. See the comment in GitHubClient.dispatch.
+DISCOVERY_ATTEMPTS = 8
+DISCOVERY_INTERVAL_S = 1.0
 
 log = structlog.get_logger(__name__)
 
@@ -217,14 +223,31 @@ class GitHubClient:
                 )
                 return run_id
 
-        located = await self.find_run_by_submission(submission_id)
-        if located is None:
-            raise GitHubError("dispatch was accepted but the run could not be located by name")
-        log.info(
-            "dispatch.located_by_name",
-            extra={"run_id": located, "submission_id": submission_id},
+        # GitHub's run list is eventually consistent: a run dispatched
+        # moments ago is measurably absent from it for ~2-3 seconds. Looking
+        # once and giving up reports a successful, already-billing dispatch as
+        # an outright failure and leaves the caller with no token to poll it
+        # with. Measured on a real dispatch: found on the third attempt at
+        # 2.93s.
+        for attempt in range(DISCOVERY_ATTEMPTS):
+            if attempt > 0:
+                await asyncio.sleep(DISCOVERY_INTERVAL_S)
+            located = await self.find_run_by_submission(submission_id)
+            if located is not None:
+                log.info(
+                    "dispatch.located_by_name",
+                    extra={
+                        "run_id": located,
+                        "submission_id": submission_id,
+                        "attempt": attempt,
+                    },
+                )
+                return located
+
+        raise GitHubError(
+            "dispatch was accepted but the run could not be located by name after "
+            f"{DISCOVERY_ATTEMPTS} attempts; it may still be running"
         )
-        return located
 
     async def list_recent_runs(self) -> tuple[WorkflowRun, ...]:
         """List the most recent benchmark runs.

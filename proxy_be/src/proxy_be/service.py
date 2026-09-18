@@ -41,10 +41,21 @@ from proxy_be.tokens import (
 DEFAULT_WORKERS = 4
 DEFAULT_ITERATIONS = 1_000_000
 
-# Documented logical core counts for the standard runner images. Used only to
-# pick the CPU count every leg is normalised to; the measured value always
-# comes back in the result's environment block.
-RUNNER_CORES = {
+# Logical core counts for the standard runner images, per GitHub's published
+# specs. Private repositories get materially smaller Linux and Windows
+# runners; macOS is the same either way. Used only to pick the CPU count every
+# leg is normalised to - the measured value always comes back in the result's
+# environment block, so a wrong guess here is visible rather than silent.
+#
+# Verified against a real run on 2026-09-18: ubuntu-latest reported
+# logical_cores=2 while this table claimed 4, which quietly capped the
+# free-threaded parallelism ceiling at 2.0 and made 4 workers meaningless.
+RUNNER_CORES_PRIVATE = {
+    "ubuntu-latest": 2,
+    "windows-latest": 2,
+    "macos-latest": 3,
+}
+RUNNER_CORES_PUBLIC = {
     "ubuntu-latest": 4,
     "windows-latest": 4,
     "macos-latest": 3,
@@ -92,6 +103,9 @@ class BenchmarkService:
         """
         self._settings = settings
         self._github = github
+        self._runner_cores = (
+            RUNNER_CORES_PUBLIC if settings.repo_is_public is True else RUNNER_CORES_PRIVATE
+        )
         self._interpreters = InterpreterCache(
             uv_executable=settings.uv_executable,
             ttl_seconds=settings.interpreter_cache_ttl_seconds,
@@ -143,7 +157,7 @@ class BenchmarkService:
                 RunnerInfo(
                     os=target.os,
                     arch=target.arch,
-                    logical_cores=RUNNER_CORES[target.image],
+                    logical_cores=self._runner_cores[target.image],
                 )
                 for target in RUNNER_TARGETS
             ]
@@ -163,7 +177,9 @@ class BenchmarkService:
             The CPU count to force through `PYTHON_CPU_COUNT`.
         """
         chosen = {selection.os for selection in selections}
-        cores = [RUNNER_CORES[target.image] for target in RUNNER_TARGETS if target.os in chosen]
+        cores = [
+            self._runner_cores[target.image] for target in RUNNER_TARGETS if target.os in chosen
+        ]
         return min(cores)
 
     def _to_leg(self, selection: SelectionRequest, cpu_count: int) -> LegKey:

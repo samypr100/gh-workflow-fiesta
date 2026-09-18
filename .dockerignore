@@ -1,0 +1,44 @@
+# The build context is the repository root (see wrangler.jsonc
+# "image_build_context"). Without this file the local CPython source trees and
+# the FastAPI checkout - several gigabytes of untracked reference material -
+# would be uploaded to the Docker daemon on every build.
+
+# Local reference checkouts, untracked and never needed in the image.
+cpython3.*/
+fastapi-local-copy/
+
+# Virtual environments and caches.
+.venv/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Frontend: the bundle is served by Workers static assets, not by the
+# container, so none of it belongs in the backend image.
+node_modules/
+**/node_modules/
+proxy_fe/
+worker/
+
+# Repository and tooling state.
+.git/
+.github/
+.idea/
+.claude/
+.DS_Store
+docs/
+
+# Cloudflare deployment files, not used inside the image.
+wrangler.jsonc
+package.json
+package-lock.json
+tsconfig.worker.json
+compose.yaml
+
+# Note: bench/ is deliberately NOT excluded. The harness never runs in this
+# image, but the root pyproject.toml declares it a uv workspace member, and
+# `uv sync --frozen` fails outright if a declared member's manifest is absent.
+# It is source-only and tiny.

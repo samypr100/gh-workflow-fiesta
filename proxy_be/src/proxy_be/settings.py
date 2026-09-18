@@ -26,6 +26,9 @@ class Settings(BaseSettings):
         interpreter_cache_ttl_seconds: Lifetime of the cached interpreter list.
         uv_executable: Path to the uv binary used to probe interpreters.
         cors_origins: Origins permitted to call the API from a browser.
+        repo_is_public: Whether the benchmark repository is public. Public
+            repositories get larger Linux and Windows runners, which changes
+            the core count every leg is normalised to.
         debug: Whether to emit human-readable logs instead of JSON.
     """
 
@@ -47,6 +50,7 @@ class Settings(BaseSettings):
 
     uv_executable: str = "uv"
     cors_origins: tuple[str, ...] = ("http://localhost:3000",)
+    repo_is_public: bool = False
     debug: bool = False
 
 
