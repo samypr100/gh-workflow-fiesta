@@ -1,0 +1,112 @@
+{
+  "leg": {
+    "os": "linux",
+    "arch": "x86_64",
+    "python_key": "cpython-3.14.7-linux-x86_64-gnu",
+    "variant": "default",
+    "workload": "cpu_bound",
+    "execution_model": "threading",
+    "params": {
+      "workers": 4,
+      "iterations": 200000,
+      "repeats": 3
+    },
+    "cpu_count_override": 4,
+    "leg_id": "linux-threading-91a7bcfc"
+  },
+  "status": "ok",
+  "environment": {
+    "runner_os": "linux",
+    "runner_arch": "x86_64",
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "logical_cores": 4,
+    "physical_cores": 2,
+    "total_memory_bytes": 16777216000,
+    "python_version": "3.14.7",
+    "python_implementation": "CPython",
+    "gil_enabled": true,
+    "cpu_count_effective": 4,
+    "cpu_count_source": "override",
+    "resolved_interpreter_key": "cpython-3.14.7-linux-x86_64-gnu"
+  },
+  "scalars": {
+    "wall_time_s": {
+      "median": 4.02,
+      "minimum": 3.95,
+      "maximum": 4.2
+    },
+    "cpu_user_s": {
+      "median": 4.05,
+      "minimum": 3.98,
+      "maximum": 4.24
+    },
+    "cpu_sys_s": {
+      "median": 0.06,
+      "minimum": 0.04,
+      "maximum": 0.09
+    },
+    "parallelism_factor": {
+      "median": 1.02,
+      "minimum": 1.0,
+      "maximum": 1.05
+    },
+    "peak_rss_bytes": {
+      "median": 21500000.0,
+      "minimum": 21000000.0,
+      "maximum": 22100000.0
+    },
+    "throughput_ops_s": {
+      "median": 199004.0,
+      "minimum": 190476.0,
+      "maximum": 202531.0
+    },
+    "repeats_completed": 3
+  },
+  "timeline": [
+    {
+      "t_s": 0.0,
+      "cpu_percent": 0.0,
+      "num_threads": 5,
+      "rss_bytes": 20000000
+    },
+    {
+      "t_s": 0.1,
+      "cpu_percent": 102.0,
+      "num_threads": 5,
+      "rss_bytes": 20250000
+    },
+    {
+      "t_s": 0.2,
+      "cpu_percent": 102.0,
+      "num_threads": 5,
+      "rss_bytes": 20500000
+    },
+    {
+      "t_s": 0.3,
+      "cpu_percent": 102.0,
+      "num_threads": 5,
+      "rss_bytes": 20750000
+    },
+    {
+      "t_s": 0.4,
+      "cpu_percent": 0.0,
+      "num_threads": 5,
+      "rss_bytes": 21000000
+    }
+  ],
+  "phases": [
+    {
+      "name": "setup",
+      "duration_s": 0.01
+    },
+    {
+      "name": "work",
+      "duration_s": 3.99
+    },
+    {
+      "name": "join",
+      "duration_s": 0.02
+    }
+  ],
+  "error": null
+}

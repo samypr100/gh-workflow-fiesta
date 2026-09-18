@@ -1,0 +1,45 @@
+[project]
+name = "gh-workflow-fiesta"
+version = "0.1.0"
+description = "Python concurrency benchmark explorer"
+requires-python = ">=3.14"
+dependencies = ["bench-contract", "bench"]
+
+[tool.uv.workspace]
+members = ["contract", "bench", "proxy_be"]
+
+[tool.uv.sources]
+bench-contract = { workspace = true }
+bench = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.9",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF", "D", "ANN"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["D"]
+"**/__init__.py" = ["D104"]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+python_version = "3.14"
+strict = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["contract/tests", "bench/tests", "proxy_be/tests"]

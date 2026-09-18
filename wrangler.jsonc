@@ -1,0 +1,100 @@
+{
+  // Cloudflare Workers deployment for the Python concurrency benchmark explorer.
+  //
+  // Deploy with:
+  //   npm install
+  //   npm run build:fe
+  //   npx wrangler secret put GITHUB_TOKEN
+  //   npx wrangler secret put TOKEN_SECRET
+  //   npx wrangler secret put USER_KEY_SECRET
+  //   npx wrangler deploy
+  //
+  // See docs/superpowers/notes/deployment.md for the full runbook.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gh-workflow-fiesta",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Served from a path prefix on an existing zone. The Worker strips the
+  // prefix before anything downstream sees it; FastAPI is never told about it.
+  "routes": [
+    {
+      "pattern": "example.com/00000000-0000-0000-0000-000000000000*",
+      "zone_name": "example.com"
+    }
+  ],
+
+  // The Vue bundle, built with an asset prefix matching the route above.
+  //
+  // run_worker_first is required, not cosmetic. By default Cloudflare serves a
+  // matching asset before the Worker ever runs, matching on the FULL incoming
+  // path - which still carries the route prefix. Since the bundle on disk has
+  // no prefix directory, that lookup would bypass the Worker's prefix
+  // stripping. Running the Worker first makes routing deterministic: it strips
+  // the prefix, then asks this binding for the real path.
+  "assets": {
+    "directory": "./proxy_fe/dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  },
+
+  // FastAPI needs real CPython, so the backend is a container rather than a
+  // Worker. Built from the repository root because the Dockerfile copies the
+  // whole uv workspace (root pyproject, contract/, proxy_be/).
+  "containers": [
+    {
+      "class_name": "BackendContainer",
+      "image": "./proxy_be/Dockerfile",
+      "image_build_context": ".",
+      "max_instances": 2,
+      // The container only proxies to the GitHub API and shells out to `uv`
+      // for the interpreter list. It is not doing the benchmarking - the
+      // Actions runners are - so it needs no headroom.
+      "instance_type": "basic"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BACKEND",
+        "class_name": "BackendContainer"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["BackendContainer"]
+    }
+  ],
+
+  // Non-secret configuration. Secrets (GITHUB_TOKEN, TOKEN_SECRET,
+  // USER_KEY_SECRET) are set with `wrangler secret put` and never appear here.
+  "vars": {
+    "GITHUB_OWNER": "samypr100",
+    "GITHUB_REPO": "gh-workflow-fiesta",
+    // Dispatched runs check out this ref, which must contain bench/ or every
+    // leg fails at `uv sync --package bench`. Pointed at "dev" because main
+    // does not yet carry the harness. Change to "main" once dev is merged.
+    //
+    // Separately, benchmark.yml must exist on the repository's DEFAULT branch
+    // for workflow_dispatch to trigger at all, regardless of this value.
+    // That is already satisfied.
+    "GITHUB_REF": "dev",
+    // Flip to "true" when the repository goes public: Linux and Windows
+    // runners grow from 2 cores to 4, which changes the core count every leg
+    // is normalised to.
+    "REPO_IS_PUBLIC": "false",
+    // Same-origin in production, so no cross-origin callers are permitted.
+    "CORS_ORIGINS": "[]"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}
