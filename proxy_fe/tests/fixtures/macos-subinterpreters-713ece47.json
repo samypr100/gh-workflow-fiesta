@@ -1,0 +1,26 @@
+{
+  "leg": {
+    "os": "macos",
+    "arch": "aarch64",
+    "python_key": "cpython-3.15.0rc2+freethreaded-macos-aarch64-none",
+    "variant": "freethreaded",
+    "workload": "cpu_bound",
+    "execution_model": "subinterpreters",
+    "params": {
+      "workers": 4,
+      "iterations": 200000,
+      "repeats": 3
+    },
+    "cpu_count_override": 3,
+    "leg_id": "macos-subinterpreters-713ece47"
+  },
+  "status": "error",
+  "environment": null,
+  "scalars": null,
+  "timeline": [],
+  "phases": [],
+  "error": {
+    "kind": "InterpreterInstallFailed",
+    "message": "uv python install exited with status 1"
+  }
+}
