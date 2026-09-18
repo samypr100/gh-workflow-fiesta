@@ -445,3 +445,5 @@ pyrightconfig.json
 /cpython3.14/
 /cpython3.15/
 /fastapi-local-copy/
+# Claude Code local state (agent worktrees, session settings)
+.claude/
