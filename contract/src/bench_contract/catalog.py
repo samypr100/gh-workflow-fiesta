@@ -86,6 +86,27 @@ def run_threading(workers: int, iterations: int) -> int:
     return workers * iterations
 """
 
+ASYNCIO_SOURCE = f"""{KERNEL_SOURCE}
+
+# {MODELS_PATH}
+import asyncio
+
+
+def run_asyncio(workers: int, iterations: int) -> int:
+    async def chunk() -> None:
+        cpu_chunk(iterations)
+
+    async def main() -> None:
+        async with asyncio.TaskGroup() as group:
+            for _ in range(workers):
+                group.create_task(chunk())
+
+    # asyncio.Runner is 3.11+, so no backport is needed here.
+    with asyncio.Runner() as runner:
+        runner.run(main())
+    return workers * iterations
+"""
+
 SUBINTERPRETERS_SOURCE = f"""{KERNEL_SOURCE}
 
 # {MODELS_PATH}  (requires Python 3.14+)
@@ -136,6 +157,26 @@ CATALOG: tuple[CatalogEntry, ...] = (
         ),
         source_path=MODELS_PATH,
         source_code=THREADING_SOURCE,
+    ),
+    CatalogEntry(
+        workload=WorkloadKind.CPU_BOUND,
+        execution_model=ExecutionModel.ASYNCIO,
+        minimum_python_minor=12,
+        title="CPU-bound, asyncio",
+        explainer=(
+            "Schedules the same arithmetic as coroutines on one event loop. asyncio "
+            "interleaves tasks at await points, and a chunk of pure arithmetic never "
+            "awaits, so the loop runs them one after another."
+        ),
+        expectation=(
+            "Parallelism factor stays near 1.0 and wall time matches the sequential "
+            "baseline, whatever the worker count. This is the difference between "
+            "concurrency and parallelism: asyncio gives you the former, and CPU-bound "
+            "work needs the latter. Compare it against threads on a free-threaded "
+            "build to see the gap."
+        ),
+        source_path=MODELS_PATH,
+        source_code=ASYNCIO_SOURCE,
     ),
     CatalogEntry(
         workload=WorkloadKind.CPU_BOUND,

@@ -4,6 +4,7 @@ Standard library only. Imported by the target interpreter, which has no
 third-party packages installed.
 """
 
+import asyncio
 import sys
 import threading
 from collections.abc import Callable, Mapping
@@ -46,6 +47,39 @@ def run_threading(workers: int, iterations: int) -> int:
     return workers * iterations * OPERATIONS_PER_ITERATION
 
 
+def run_asyncio(workers: int, iterations: int) -> int:
+    """Run each chunk as a coroutine on one event loop.
+
+    This is the case that teaches the difference between concurrency and
+    parallelism. `asyncio` interleaves tasks at await points; a chunk of pure
+    arithmetic never awaits, so the tasks cannot interleave and the loop runs
+    them one after another. The measurement should look like the sequential
+    baseline, not like threads.
+
+    Args:
+        workers: Number of coroutines to schedule.
+        iterations: Iterations per coroutine.
+
+    Returns:
+        Total operations performed.
+    """
+
+    async def chunk() -> None:
+        cpu_chunk(iterations)
+
+    async def main() -> None:
+        async with asyncio.TaskGroup() as group:
+            for _ in range(workers):
+                group.create_task(chunk())
+
+    # asyncio.Runner arrived in 3.11 and this benchmark targets 3.12 upward,
+    # so no backport is needed - which matters, because workload code must
+    # stay pure stdlib to run on every target interpreter.
+    with asyncio.Runner() as runner:
+        runner.run(main())
+    return workers * iterations * OPERATIONS_PER_ITERATION
+
+
 def run_subinterpreters(workers: int, iterations: int) -> int:
     """Run each chunk in its own interpreter within one process.
 
@@ -79,5 +113,6 @@ def run_subinterpreters(workers: int, iterations: int) -> int:
 EXECUTION_MODELS: Mapping[str, Callable[[int, int], int]] = {
     "sequential": run_sequential,
     "threading": run_threading,
+    "asyncio": run_asyncio,
     "subinterpreters": run_subinterpreters,
 }
