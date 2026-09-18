@@ -1,0 +1,104 @@
+name: benchmark
+
+run-name: "bench ${{ inputs.submission_id }} [${{ inputs.user_key }}]"
+
+on:
+  workflow_dispatch:
+    inputs:
+      matrix:
+        description: "JSON matrix object with an include list, one entry per leg"
+        required: true
+        type: string
+      user_key:
+        description: "Opaque per-user key used for deduplication"
+        required: true
+        type: string
+      submission_id:
+        description: "Opaque submission identifier"
+        required: true
+        type: string
+      timeout_seconds:
+        description: "Per-leg time budget in seconds"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark-${{ inputs.user_key }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.check.outputs.matrix }}
+    steps:
+      - name: Validate the dispatched inputs
+        id: check
+        shell: bash
+        env:
+          RAW_MATRIX: ${{ inputs.matrix }}
+          RAW_TIMEOUT: ${{ inputs.timeout_seconds }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$RAW_MATRIX" | jq -e 'has("include")' >/dev/null; then
+            echo "matrix input has no include list" >&2
+            exit 1
+          fi
+          count=$(printf '%s' "$RAW_MATRIX" | jq '.include | length')
+          if [ "$count" -lt 1 ] || [ "$count" -gt 256 ]; then
+            echo "matrix must contain between 1 and 256 legs, got $count" >&2
+            exit 1
+          fi
+          if ! printf '%s' "$RAW_TIMEOUT" | grep -Eq '^[0-9]+$'; then
+            echo "timeout_seconds must be a positive integer" >&2
+            exit 1
+          fi
+          if [ "$RAW_TIMEOUT" -lt 10 ] || [ "$RAW_TIMEOUT" -gt 300 ]; then
+            echo "timeout_seconds must be between 10 and 300" >&2
+            exit 1
+          fi
+          printf 'matrix=%s\n' "$(printf '%s' "$RAW_MATRIX" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+  leg:
+    needs: validate
+    name: ${{ matrix.leg_id }}
+    runs-on: ${{ matrix.runs_on }}
+    timeout-minutes: 6
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.validate.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Sync the harness environment
+        run: uv sync --frozen --package bench
+
+      - name: Run the benchmark leg
+        shell: bash
+        env:
+          LEG_JSON: ${{ matrix.leg_json }}
+          TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        run: |
+          set -euo pipefail
+          uv run --package bench bench-run \
+            --leg-json "$LEG_JSON" \
+            --output "result.json" \
+            --src-path "bench/src" \
+            --timeout-seconds "$TIMEOUT_SECONDS"
+
+      - name: Upload the result
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: result-${{ matrix.leg_id }}
+          path: result.json
+          retention-days: 1
+          if-no-files-found: error
