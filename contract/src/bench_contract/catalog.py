@@ -22,6 +22,11 @@ class CatalogEntry(BaseModel):
             know the concurrency model.
         expectation: What the measurement should look like, so a surprising result
             is recognisable as surprising.
+        source_path: Repository path of the code this entry executes, so a
+            reader can check the snippet below against what actually ran.
+        source_code: The kernel and execution strategy, as displayed in the
+            interface. Kept verbatim from the modules named in `source_path`;
+            `KERNEL_SOURCE` holds the shared part.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -32,6 +37,67 @@ class CatalogEntry(BaseModel):
     title: str
     explainer: str
     expectation: str
+    source_path: str
+    source_code: str
+
+
+# The workload kernel every execution model drives. Shown above each strategy
+# so a reader can see that the work itself is identical and only the way it is
+# scheduled changes.
+KERNEL_SOURCE = '''# bench/src/bench/workloads/cpu.py
+MODULUS = 1_000_003
+MULTIPLIER = 31
+
+
+def cpu_chunk(iterations: int) -> int:
+    """Run a fixed amount of interpreted arithmetic."""
+    total = 0
+    for index in range(iterations):
+        total = (total * MULTIPLIER + index * index) % MODULUS
+    return total
+'''
+
+MODELS_PATH = "bench/src/bench/target/models.py"
+
+SEQUENTIAL_SOURCE = f"""{KERNEL_SOURCE}
+
+# {MODELS_PATH}
+def run_sequential(workers: int, iterations: int) -> int:
+    for _ in range(workers):
+        cpu_chunk(iterations)
+    return workers * iterations
+"""
+
+THREADING_SOURCE = f"""{KERNEL_SOURCE}
+
+# {MODELS_PATH}
+import threading
+
+
+def run_threading(workers: int, iterations: int) -> int:
+    threads = [
+        threading.Thread(target=cpu_chunk, args=(iterations,))
+        for _ in range(workers)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    return workers * iterations
+"""
+
+SUBINTERPRETERS_SOURCE = f"""{KERNEL_SOURCE}
+
+# {MODELS_PATH}  (requires Python 3.14+)
+def run_subinterpreters(workers: int, iterations: int) -> int:
+    from concurrent.futures import InterpreterPoolExecutor
+
+    with InterpreterPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(cpu_chunk, iterations) for _ in range(workers)]
+        for future in futures:
+            future.result()
+    return workers * iterations
+"""
 
 
 CATALOG: tuple[CatalogEntry, ...] = (
@@ -49,6 +115,8 @@ CATALOG: tuple[CatalogEntry, ...] = (
             "Parallelism factor sits near 1.0 because only one core is ever busy. "
             "Wall time and CPU time are nearly equal."
         ),
+        source_path=MODELS_PATH,
+        source_code=SEQUENTIAL_SOURCE,
     ),
     CatalogEntry(
         workload=WorkloadKind.CPU_BOUND,
@@ -66,6 +134,8 @@ CATALOG: tuple[CatalogEntry, ...] = (
             "worker count. This contrast is the clearest demonstration of what the GIL "
             "actually costs."
         ),
+        source_path=MODELS_PATH,
+        source_code=THREADING_SOURCE,
     ),
     CatalogEntry(
         workload=WorkloadKind.CPU_BOUND,
@@ -82,6 +152,8 @@ CATALOG: tuple[CatalogEntry, ...] = (
             "GIL enabled, because each interpreter has its own. Startup cost is higher "
             "than threads, so short runs may show less benefit."
         ),
+        source_path=MODELS_PATH,
+        source_code=SUBINTERPRETERS_SOURCE,
     ),
 )
 

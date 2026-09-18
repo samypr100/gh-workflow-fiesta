@@ -78,9 +78,14 @@
   "vars": {
     "GITHUB_OWNER": "samypr100",
     "GITHUB_REPO": "gh-workflow-fiesta",
-    // Dispatched runs check out this ref. benchmark.yml must exist on the
-    // repository's default branch for workflow_dispatch to trigger at all.
-    "GITHUB_REF": "main",
+    // Dispatched runs check out this ref, which must contain bench/ or every
+    // leg fails at `uv sync --package bench`. Pointed at "dev" because main
+    // does not yet carry the harness. Change to "main" once dev is merged.
+    //
+    // Separately, benchmark.yml must exist on the repository's DEFAULT branch
+    // for workflow_dispatch to trigger at all, regardless of this value.
+    // That is already satisfied.
+    "GITHUB_REF": "dev",
     // Flip to "true" when the repository goes public: Linux and Windows
     // runners grow from 2 cores to 4, which changes the core count every leg
     // is normalised to.

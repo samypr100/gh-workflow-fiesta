@@ -34,6 +34,8 @@ class CatalogItem(BaseModel):
         title: Short label for the interface.
         explainer: What this combination does.
         expectation: What the measurement should look like.
+        source_path: Repository path of the code this entry executes.
+        source_code: The code itself, shown collapsed in the interface.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -44,6 +46,8 @@ class CatalogItem(BaseModel):
     title: str
     explainer: str
     expectation: str
+    source_path: str
+    source_code: str
 
 
 class CatalogResponse(BaseModel):

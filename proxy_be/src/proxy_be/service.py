@@ -130,6 +130,8 @@ class BenchmarkService:
                     title=entry.title,
                     explainer=entry.explainer,
                     expectation=entry.expectation,
+                    source_path=entry.source_path,
+                    source_code=entry.source_code,
                 )
                 for entry in CATALOG
             ],

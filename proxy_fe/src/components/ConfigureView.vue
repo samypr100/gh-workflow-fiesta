@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import type {
   CatalogItem,
   CatalogResponse,
+  ExecutionModel,
   InterpreterOption,
   RunnerInfo,
   SelectionRequest,
@@ -41,6 +42,25 @@ function unavailableReason(item: CatalogItem): string | null {
 const availableItems = computed(() =>
   props.catalog.items.map((item) => ({ item, reason: unavailableReason(item) })),
 );
+
+// Which execution models have their source expanded. Collapsed by default:
+// a reader choosing a strategy should not have to scroll past code first.
+const openSources = ref(new Set<ExecutionModel>());
+
+function isOpen(model: ExecutionModel): boolean {
+  return openSources.value.has(model);
+}
+
+function toggleSource(model: ExecutionModel): void {
+  // Replaced rather than mutated, because Vue does not track Set mutation.
+  const next = new Set(openSources.value);
+  if (next.has(model)) {
+    next.delete(model);
+  } else {
+    next.add(model);
+  }
+  openSources.value = next;
+}
 
 function addConfiguration(): void {
   const interpreter = chosenInterpreter.value;
@@ -119,29 +139,62 @@ function describe(selection: SelectionRequest): string {
 
     <fieldset class="space-y-2">
       <legend class="text-sm font-medium text-slate-700">Execution model</legend>
-      <label
+      <div
         v-for="{ item, reason } in availableItems"
         :key="item.execution_model"
-        class="flex gap-3 rounded border p-3"
+        class="rounded border p-3"
         :class="reason ? 'border-slate-200 opacity-60' : 'border-slate-300'"
       >
-        <input
-          v-model="chosenModel"
-          type="radio"
-          :value="item.execution_model"
-          :disabled="reason !== null"
-          :data-testid="`model-${item.execution_model}`"
-          class="mt-1"
-        />
-        <span>
-          <span class="font-medium text-slate-800">{{ item.title }}</span>
-          <span class="block text-sm text-slate-600">{{ item.explainer }}</span>
-          <span class="block text-sm text-slate-500">Expect: {{ item.expectation }}</span>
-          <span v-if="reason" class="mt-1 block text-sm font-medium text-amber-700">
-            {{ reason }}
+        <label class="flex gap-3">
+          <input
+            v-model="chosenModel"
+            type="radio"
+            :value="item.execution_model"
+            :disabled="reason !== null"
+            :data-testid="`model-${item.execution_model}`"
+            class="mt-1"
+          />
+          <span>
+            <span class="font-medium text-slate-800">{{ item.title }}</span>
+            <span class="block text-sm text-slate-600">{{ item.explainer }}</span>
+            <span class="block text-sm text-slate-500">Expect: {{ item.expectation }}</span>
+            <span v-if="reason" class="mt-1 block text-sm font-medium text-amber-700">
+              {{ reason }}
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+
+        <!-- Collapsed by default: the code is reassurance for a reader who
+             wants it, not something to wade through before choosing. -->
+        <button
+          type="button"
+          class="mt-2 flex items-center gap-1 text-xs font-medium text-sky-700 hover:text-sky-900"
+          :data-testid="`toggle-source-${item.execution_model}`"
+          :aria-expanded="isOpen(item.execution_model)"
+          :aria-controls="`source-${item.execution_model}`"
+          @click="toggleSource(item.execution_model)"
+        >
+          <span
+            class="inline-block transition-transform"
+            :class="isOpen(item.execution_model) ? 'rotate-90' : ''"
+            aria-hidden="true"
+            >&#9656;</span
+          >
+          {{ isOpen(item.execution_model) ? 'Hide' : 'Show' }} the code this runs
+        </button>
+        <div
+          v-show="isOpen(item.execution_model)"
+          :id="`source-${item.execution_model}`"
+          :data-testid="`source-${item.execution_model}`"
+        >
+          <pre
+            class="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-xs leading-relaxed text-slate-100"
+          ><code>{{ item.source_code }}</code></pre>
+          <p class="mt-1 text-xs text-slate-500">
+            From <code>{{ item.source_path }}</code> in the benchmark repository.
+          </p>
+        </div>
+      </div>
     </fieldset>
 
     <button

@@ -98,6 +98,8 @@ export interface CatalogItem {
   readonly title: string;
   readonly explainer: string;
   readonly expectation: string;
+  readonly source_path: string;
+  readonly source_code: string;
 }
 
 export interface CatalogResponse {
