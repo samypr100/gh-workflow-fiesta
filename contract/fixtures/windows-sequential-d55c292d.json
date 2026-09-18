@@ -1,0 +1,70 @@
+{
+  "leg": {
+    "os": "windows",
+    "arch": "x86_64",
+    "python_key": "cpython-3.13.15-windows-x86_64-none",
+    "variant": "default",
+    "workload": "cpu_bound",
+    "execution_model": "sequential",
+    "params": {
+      "workers": 1,
+      "iterations": 10000000,
+      "repeats": 3
+    },
+    "cpu_count_override": 4,
+    "leg_id": "windows-sequential-d55c292d"
+  },
+  "status": "timeout",
+  "environment": {
+    "runner_os": "windows",
+    "runner_arch": "x86_64",
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "logical_cores": 4,
+    "physical_cores": 2,
+    "total_memory_bytes": 16777216000,
+    "python_version": "3.13.15",
+    "python_implementation": "CPython",
+    "gil_enabled": true,
+    "cpu_count_effective": 4,
+    "cpu_count_source": "override",
+    "resolved_interpreter_key": "cpython-3.13.15-windows-x86_64-none"
+  },
+  "scalars": null,
+  "timeline": [
+    {
+      "t_s": 0.0,
+      "cpu_percent": 0.0,
+      "num_threads": 5,
+      "rss_bytes": 20000000
+    },
+    {
+      "t_s": 0.1,
+      "cpu_percent": 100.0,
+      "num_threads": 5,
+      "rss_bytes": 20250000
+    },
+    {
+      "t_s": 0.2,
+      "cpu_percent": 100.0,
+      "num_threads": 5,
+      "rss_bytes": 20500000
+    },
+    {
+      "t_s": 0.3,
+      "cpu_percent": 100.0,
+      "num_threads": 5,
+      "rss_bytes": 20750000
+    },
+    {
+      "t_s": 0.4,
+      "cpu_percent": 0.0,
+      "num_threads": 5,
+      "rss_bytes": 21000000
+    }
+  ],
+  "phases": [],
+  "error": {
+    "kind": "Timeout",
+    "message": "target process exceeded the 300s budget and was terminated"
+  }
+}
