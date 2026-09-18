@@ -154,6 +154,74 @@ def _run_once(
     )
 
 
+# `platform.machine()` reports whatever the operating system calls the
+# architecture, so the same hardware comes back as `arm64` on macOS and
+# `aarch64` on Linux, and as `AMD64` on Windows against `x86_64` elsewhere.
+# The contract uses uv's vocabulary, and a leg whose reported arch disagrees
+# with the arch in its own LegKey reads as a bug in the comparison grid.
+ARCH_ALIASES = {
+    "amd64": "x86_64",
+    "x86_64": "x86_64",
+    "x64": "x86_64",
+    "arm64": "aarch64",
+    "aarch64": "aarch64",
+}
+
+CPU_MODEL_FALLBACK = "unknown"
+SYSCTL_TIMEOUT_S = 5.0
+
+
+def _normalise_arch(raw: str) -> str:
+    """Map an operating system's architecture name onto uv's vocabulary.
+
+    Args:
+        raw: Name as the platform reports it.
+
+    Returns:
+        The contract's name for that architecture, or the lowercased input
+        when it is not one this benchmark targets.
+    """
+    return ARCH_ALIASES.get(raw.lower(), raw.lower())
+
+
+def _cpu_model() -> str:
+    """Describe the processor in a form worth showing a reader.
+
+    `platform.processor()` returns something useful only on Windows; on Linux
+    it echoes the architecture and on macOS it returns `arm`, neither of which
+    tells a reader which machine produced a measurement.
+
+    Returns:
+        A processor description, or a fallback when none can be determined.
+    """
+    match platform.system():
+        case "Linux":
+            try:
+                lines = Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines()
+            except OSError:
+                lines = []
+            for line in lines:
+                name, separator, value = line.partition(":")
+                if separator != "" and name.strip() == "model name":
+                    return value.strip()
+        case "Darwin":
+            try:
+                completed = subprocess.run(
+                    ["/usr/sbin/sysctl", "-n", "machdep.cpu.brand_string"],
+                    capture_output=True,
+                    text=True,
+                    timeout=SYSCTL_TIMEOUT_S,
+                    check=True,
+                )
+            except subprocess.SubprocessError, OSError:
+                completed = None
+            if completed is not None and completed.stdout.strip() != "":
+                return completed.stdout.strip()
+        case _:
+            pass
+    return platform.processor() or platform.machine() or CPU_MODEL_FALLBACK
+
+
 def _environment_from(report: InnerReport, leg: LegKey) -> Environment:
     """Describe the runner and interpreter a leg actually ran on.
 
@@ -169,8 +237,8 @@ def _environment_from(report: InnerReport, leg: LegKey) -> Environment:
     )
     return Environment(
         runner_os=_detect_os(),
-        runner_arch=platform.machine(),
-        cpu_model=platform.processor() or "unknown",
+        runner_arch=_normalise_arch(platform.machine()),
+        cpu_model=_cpu_model(),
         logical_cores=psutil.cpu_count(logical=True) or 1,
         physical_cores=psutil.cpu_count(logical=False),
         total_memory_bytes=psutil.virtual_memory().total,
