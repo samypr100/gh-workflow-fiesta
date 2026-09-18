@@ -1,7 +1,6 @@
 """Tests for the workload catalog."""
 
 import pytest
-
 from bench_contract.catalog import (
     CATALOG,
     find_entry,

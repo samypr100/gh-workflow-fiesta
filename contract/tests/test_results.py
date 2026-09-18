@@ -1,8 +1,6 @@
 """Tests for benchmark result models."""
 
 import pytest
-from pydantic import ValidationError
-
 from bench_contract.enums import (
     CpuCountSource,
     ExecutionModel,
@@ -18,10 +16,11 @@ from bench_contract.results import (
     InnerReport,
     LegError,
     RunResult,
-    ScalarStats,
     Scalars,
+    ScalarStats,
     TimelinePoint,
 )
+from pydantic import ValidationError
 
 
 def make_leg() -> LegKey:

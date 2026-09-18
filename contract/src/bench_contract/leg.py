@@ -37,7 +37,10 @@ class LegKey(BaseModel):
     params: WorkloadParams
     cpu_count_override: int | None = None
 
-    @computed_field
+    # mypy issue #1362 (https://github.com/python/mypy/issues/1362): a
+    # decorator on top of @property is not understood by mypy. This is the
+    # workaround pydantic's own documentation recommends.
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def leg_id(self) -> str:
         """Stable, artifact-name-safe identifier derived from every field.

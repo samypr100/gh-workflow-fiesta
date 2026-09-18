@@ -1,9 +1,8 @@
 """Tests for workload parameter validation."""
 
 import pytest
-from pydantic import ValidationError
-
 from bench_contract.params import WorkloadParams
+from pydantic import ValidationError
 
 
 def test_defaults_to_three_repeats() -> None:
@@ -29,5 +28,9 @@ def test_rejects_out_of_range_values(field: str, value: int) -> None:
 
 def test_is_frozen() -> None:
     params = WorkloadParams(workers=4, iterations=1000)
+    field_name = "workers"
     with pytest.raises(ValidationError):
-        params.workers = 8
+        # Assigning through setattr (rather than attribute syntax) keeps this
+        # a runtime-only check; frozen fields are statically read-only, so
+        # `params.workers = 8` would be flagged by mypy as invalid on its own.
+        setattr(params, field_name, 8)

@@ -3,8 +3,8 @@
 import json
 
 from bench_contract.dispatch import (
-    DispatchInput,
     RUNNER_IMAGES,
+    DispatchInput,
     artifact_name,
     build_matrix,
 )

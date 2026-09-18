@@ -19,8 +19,8 @@ from bench_contract.results import (
     LegError,
     Phase,
     RunResult,
-    ScalarStats,
     Scalars,
+    ScalarStats,
     TimelinePoint,
 )
 
@@ -115,9 +115,7 @@ def _gil_threading_result() -> RunResult:
             peak_rss_bytes=ScalarStats(
                 median=21_500_000.0, minimum=21_000_000.0, maximum=22_100_000.0
             ),
-            throughput_ops_s=ScalarStats(
-                median=199_004.0, minimum=190_476.0, maximum=202_531.0
-            ),
+            throughput_ops_s=ScalarStats(median=199_004.0, minimum=190_476.0, maximum=202_531.0),
             repeats_completed=3,
         ),
         timeline=_timeline(102.0),
@@ -161,9 +159,7 @@ def _freethreaded_threading_result() -> RunResult:
             peak_rss_bytes=ScalarStats(
                 median=27_800_000.0, minimum=27_100_000.0, maximum=28_400_000.0
             ),
-            throughput_ops_s=ScalarStats(
-                median=661_157.0, minimum=601_503.0, maximum=695_652.0
-            ),
+            throughput_ops_s=ScalarStats(median=661_157.0, minimum=601_503.0, maximum=695_652.0),
             repeats_completed=3,
         ),
         timeline=_timeline(381.0),

@@ -86,9 +86,7 @@ CATALOG: tuple[CatalogEntry, ...] = (
 )
 
 
-def find_entry(
-    workload: WorkloadKind, execution_model: ExecutionModel
-) -> CatalogEntry | None:
+def find_entry(workload: WorkloadKind, execution_model: ExecutionModel) -> CatalogEntry | None:
     """Look up a catalog entry.
 
     Args:
