@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: proxy_be/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN:?set GITHUB_TOKEN in your shell or .env}
+      GITHUB_OWNER: samypr100
+      GITHUB_REPO: gh-workflow-fiesta
+      GITHUB_REF: dev
+      TOKEN_SECRET: ${TOKEN_SECRET:?set TOKEN_SECRET}
+      USER_KEY_SECRET: ${USER_KEY_SECRET:?set USER_KEY_SECRET}
+      CORS_ORIGINS: '["http://localhost:3000"]'
+      DEBUG: "true"

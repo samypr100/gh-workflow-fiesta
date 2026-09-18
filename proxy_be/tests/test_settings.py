@@ -1,9 +1,8 @@
 """Tests for backend configuration."""
 
 import pytest
-from pydantic import ValidationError
-
 from proxy_be.settings import Settings
+from pydantic import ValidationError
 
 REQUIRED = {
     "GITHUB_TOKEN": "ghp_example",
