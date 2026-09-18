@@ -1,0 +1,32 @@
+{
+  "name": "proxy_fe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vue-tsc && rsbuild build",
+    "dev": "rsbuild",
+    "lint": "rslint",
+    "preview": "rsbuild preview",
+    "test": "rstest",
+    "test:watch": "rstest --watch"
+  },
+  "dependencies": {
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^2.2.5",
+    "@rsbuild/plugin-tailwindcss": "^2.0.3",
+    "@rsbuild/plugin-vue": "^2.0.1",
+    "@rslint/core": "^0.9.0",
+    "@rstest/adapter-rsbuild": "^0.11.12",
+    "@rstest/core": "^0.11.12",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@types/node": "^24.13.3",
+    "@vue/test-utils": "^2.5.0",
+    "happy-dom": "^20.14.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.11"
+  }
+}
