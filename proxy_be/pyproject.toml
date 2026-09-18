@@ -7,10 +7,17 @@ authors = [
     { name = "samypr100", email = "3933065+samypr100@users.noreply.github.com" }
 ]
 requires-python = ">=3.14"
-dependencies = ["bench-contract"]
+dependencies = [
+    "bench-contract",
+    "fastapi>=0.118",
+    "httpx>=0.28",
+    "pydantic-settings>=2.7",
+    "structlog>=24.4",
+    "uvicorn[standard]>=0.34",
+]
 
 [project.scripts]
-proxy-be = "proxy_be:main"
+proxy-be = "proxy_be.main:run"
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.13.0"]
